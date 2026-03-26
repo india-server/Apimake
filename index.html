@@ -2,571 +2,60 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>NumberInfo API | Real Data Fetch</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NumberInfo API</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: radial-gradient(circle at 10% 30%, #0b1120, #030617);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            min-height: 100vh;
-            padding: 1.5rem;
-        }
-        .container { max-width: 700px; margin: 0 auto; }
-        
-        .card {
-            background: rgba(18, 25, 45, 0.85);
-            backdrop-filter: blur(12px);
-            border-radius: 2rem;
-            border: 1px solid rgba(34, 197, 94, 0.25);
-            padding: 2rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        h1 {
-            font-size: 1.8rem;
-            background: linear-gradient(135deg, #FFFFFF, #94a3b8);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-align: center;
-            margin-bottom: 0.5rem;
-        }
-        
-        .sub {
-            text-align: center;
-            color: #94a3b8;
-            font-size: 0.85rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .input-group {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            margin-bottom: 1rem;
-        }
-        .input-group input {
-            flex: 1;
-            padding: 0.9rem 1rem;
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 1rem;
-            color: white;
-            font-size: 1rem;
-            outline: none;
-            font-family: monospace;
-        }
-        .input-group input:focus {
-            border-color: #22c55e;
-            box-shadow: 0 0 0 2px #22c55e20;
-        }
-        .input-group button {
-            padding: 0.9rem 1.5rem;
-            background: linear-gradient(95deg, #15803d, #22c55e);
-            border: none;
-            border-radius: 1rem;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .input-group button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px #22c55e40;
-        }
-        
-        .result-panel {
-            background: rgba(2, 6, 23, 0.65);
-            backdrop-filter: blur(8px);
-            border-radius: 1.5rem;
-            border: 1px solid rgba(34,197,94,0.2);
-            overflow: hidden;
-        }
-        .result-header {
-            padding: 1rem;
-            border-bottom: 1px dashed #334155;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        .result-body {
-            padding: 1rem;
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        
-        .results-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-        .result-item {
-            background: #0f172a70;
-            border-radius: 1rem;
-            padding: 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            border-left: 3px solid #22c55e;
-        }
-        .result-item:hover {
-            background: #1e293b;
-            transform: translateX(4px);
-        }
-        .result-name {
-            font-weight: 700;
-            color: #bbf7d0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .result-mobile {
-            font-size: 0.75rem;
-            color: #86efac;
-            font-family: monospace;
-            margin-top: 4px;
-        }
-        .result-address {
-            font-size: 0.7rem;
-            color: #94a3b8;
-            margin-top: 6px;
-        }
-        .badge {
-            background: #22c55e20;
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-size: 0.65rem;
-            color: #86efac;
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(8px);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-        .modal.show { display: flex; }
-        .modal-content {
-            background: #0f172a;
-            border-radius: 1.5rem;
-            max-width: 500px;
-            width: 100%;
-            max-height: 80vh;
-            overflow-y: auto;
-            border: 1px solid #22c55e40;
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            border-bottom: 1px solid #334155;
-        }
-        .modal-body { padding: 1rem; }
-        .modal-close {
-            background: none;
-            border: none;
-            color: #94a3b8;
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-        .detail-row {
-            margin-bottom: 1rem;
-            padding: 0.75rem;
-            background: #1e293b;
-            border-radius: 0.75rem;
-        }
-        .detail-label {
-            font-size: 0.7rem;
-            color: #86efac;
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-        .detail-value {
-            font-size: 0.9rem;
-            word-break: break-word;
-            color: #f1f5f9;
-        }
-        
-        .loader {
-            display: flex;
-            justify-content: center;
-            padding: 2rem;
-            gap: 8px;
-        }
-        .loader div {
-            width: 10px;
-            height: 10px;
-            background: #22c55e;
-            border-radius: 50%;
-            animation: bounce 0.6s infinite alternate;
-        }
-        .loader div:nth-child(2) { animation-delay: 0.2s; }
-        .loader div:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes bounce {
-            0% { transform: translateY(0); opacity: 0.4; }
-            100% { transform: translateY(-12px); opacity: 1; }
-        }
-        
-        .error-msg {
-            background: #ef444420;
-            border-left: 3px solid #ef4444;
-            padding: 1rem;
-            border-radius: 0.75rem;
-            color: #fecaca;
-        }
-        
-        .footer {
-            text-align: center;
-            margin-top: 1.5rem;
-            font-size: 0.7rem;
-            color: #4b5563;
-        }
-        
-        .json-view {
             background: #0a0f1a;
-            padding: 1rem;
-            border-radius: 0.75rem;
             font-family: monospace;
-            font-size: 0.75rem;
+            padding: 2rem;
+            color: #86efac;
+        }
+        pre {
+            background: #0f172a;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
             white-space: pre-wrap;
             word-break: break-all;
-            color: #86efac;
         }
-        
-        @media (max-width: 640px) {
-            .card { padding: 1.25rem; }
-            .input-group { flex-direction: column; }
+        .error {
+            color: #ef4444;
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="card">
-        <h1><i class="fas fa-phone-alt"></i> NumberInfo <span style="color:#22c55e;">API</span></h1>
-        <div class="sub">
-            <i class="fas fa-database"></i> Real API Call | Instagram Reels Data Format
-            <br><small>🔗 JSON API: <code>?number=XXXX&format=json</code></small>
-        </div>
-        
-        <div class="input-group">
-            <input type="tel" id="phoneNumber" placeholder="Enter mobile number (e.g., 9439123621)" value="7571762689">
-            <button onclick="searchNumber()"><i class="fas fa-search"></i> Lookup</button>
-            <button onclick="getJSON()" style="background: #3b82f6;"><i class="fas fa-code"></i> Get JSON</button>
-        </div>
-    </div>
-    
-    <div class="result-panel">
-        <div class="result-header">
-            <span><i class="fas fa-chart-line"></i> API Response</span>
-            <span id="statusBadge" class="badge">Ready</span>
-        </div>
-        <div class="result-body" id="resultBody">
-            <div style="text-align: center; padding: 2rem; color: #6b7280;">
-                <i class="fas fa-search"></i> Enter a number and click Lookup
-            </div>
-        </div>
-    </div>
-    
-    <div class="footer">
-        <i class="fas fa-lock"></i> Real-time API | Data from numberinfoapi.onrender.com
-        <br><small>📡 API Route: <code>?number=7571762689&format=json</code></small>
-    </div>
-</div>
+    <div id="content">Loading...</div>
 
-<!-- Modal -->
-<div id="detailModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="fas fa-user-secret"></i> Full Details</h3>
-            <button class="modal-close" onclick="closeModal()">&times;</button>
-        </div>
-        <div class="modal-body" id="modalBody"></div>
-    </div>
-</div>
+    <script>
+        const API_BASE = "https://numberinfoapi.onrender.com/lookup";
+        const API_KEY = "ak_kFQlFtduAvaDIPteuDYYJnYxamd5Tw8m";
 
-<script>
-    // ============================================
-    // REAL API CONFIGURATION
-    // ============================================
-    const API_BASE = "https://numberinfoapi.onrender.com/lookup";
-    const API_KEY = "ak_kFQlFtduAvaDIPteuDYYJnYxamd5Tw8m";
-    
-    let currentResults = [];
-    let currentRawData = null;
-    
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-    
-    function showLoading() {
-        const container = document.getElementById('resultBody');
-        container.innerHTML = `
-            <div class="loader">
-                <div></div><div></div><div></div>
-            </div>
-            <div style="text-align: center; color: #a0b3d9;">Fetching data from API...</div>
-        `;
-        document.getElementById('statusBadge').innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Loading';
-    }
-    
-    function showError(message) {
-        const container = document.getElementById('resultBody');
-        container.innerHTML = `
-            <div class="error-msg">
-                <i class="fas fa-exclamation-triangle"></i> ${escapeHtml(message)}
-            </div>
-        `;
-        document.getElementById('statusBadge').innerHTML = '❌ Error';
-    }
-    
-    function showJSONResponse(data) {
-        const container = document.getElementById('resultBody');
-        container.innerHTML = `
-            <div class="json-view">
-                <i class="fas fa-brackets-curly"></i> JSON Response<br><br>
-                <pre style="color:#86efac; font-family:monospace; font-size:0.7rem; white-space:pre-wrap; word-break:break-all;">${JSON.stringify(data, null, 2)}</pre>
-            </div>
-        `;
-        document.getElementById('statusBadge').innerHTML = '📄 JSON Mode';
-    }
-    
-    function renderResultsList(data, searchedNumber) {
-        const results = data.result?.results || [];
-        const count = data.result?.count || 0;
-        
-        if (!results || results.length === 0) {
-            return `
-                <div style="text-align: center; padding: 2rem;">
-                    <i class="fas fa-search"></i> No records found for ${escapeHtml(searchedNumber)}
-                </div>
-            `;
-        }
-        
-        let html = `
-            <div style="margin-bottom: 1rem; display: flex; gap: 8px; flex-wrap: wrap;">
-                <span class="badge"><i class="fas fa-list"></i> ${count} records</span>
-                <span class="badge"><i class="fas fa-clock"></i> ${data.result.search_time || 'N/A'}</span>
-            </div>
-            <div class="results-list">
-        `;
-        
-        results.forEach((item, index) => {
-            const name = item.name || "Unknown";
-            const mobile = item.mobile || searchedNumber;
-            const addressPreview = (item.address || "").substring(0, 80);
-            const circle = item.circle || "";
+        async function fetchData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let number = urlParams.get('number');
             
-            html += `
-                <div class="result-item" onclick="showDetails(${index})">
-                    <div class="result-name">
-                        <i class="fas fa-user"></i> ${escapeHtml(name)}
-                        ${circle ? `<span class="badge"><i class="fas fa-signal"></i> ${escapeHtml(circle)}</span>` : ''}
-                    </div>
-                    <div class="result-mobile"><i class="fas fa-phone"></i> ${escapeHtml(mobile)}</div>
-                    ${addressPreview ? `<div class="result-address"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(addressPreview)}${item.address?.length > 80 ? '...' : ''}</div>` : ''}
-                </div>
-            `;
-        });
-        
-        html += `</div>`;
-        return html;
-    }
-    
-    function showDetails(index) {
-        const item = currentResults[index];
-        if (!item) return;
-        
-        const modalBody = document.getElementById('modalBody');
-        modalBody.innerHTML = `
-            <div class="detail-row">
-                <div class="detail-label"><i class="fas fa-user"></i> FULL NAME</div>
-                <div class="detail-value"><strong style="color:#bbf7d0;">${escapeHtml(item.name || "Not Disclosed")}</strong></div>
-            </div>
-            <div class="detail-row">
-                <div class="detail-label"><i class="fas fa-male"></i> FATHER'S NAME</div>
-                <div class="detail-value">${escapeHtml(item.fname || item.father || "—")}</div>
-            </div>
-            <div class="detail-row">
-                <div class="detail-label"><i class="fas fa-mobile-alt"></i> MOBILE NUMBER</div>
-                <div class="detail-value">${escapeHtml(item.mobile || "—")}</div>
-            </div>
-            ${item.alt ? `
-            <div class="detail-row">
-                <div class="detail-label"><i class="fas fa-phone"></i> ALTERNATE NUMBER</div>
-                <div class="detail-value">${escapeHtml(item.alt)}</div>
-            </div>
-            ` : ''}
-            <div class="detail-row">
-                <div class="detail-label"><i class="fas fa-location-dot"></i> ADDRESS</div>
-                <div class="detail-value">${escapeHtml(item.address || "Address not available")}</div>
-            </div>
-            ${item.circle ? `
-            <div class="detail-row">
-                <div class="detail-label"><i class="fas fa-signal"></i> CIRCLE / NETWORK</div>
-                <div class="detail-value">${escapeHtml(item.circle)}</div>
-            </div>
-            ` : ''}
-            ${item.id ? `
-            <div class="detail-row">
-                <div class="detail-label"><i class="fas fa-id-card"></i> ID / REFERENCE</div>
-                <div class="detail-value">${escapeHtml(item.id)}</div>
-            </div>
-            ` : ''}
-            ${item.email ? `
-            <div class="detail-row">
-                <div class="detail-label"><i class="fas fa-envelope"></i> EMAIL</div>
-                <div class="detail-value">${escapeHtml(item.email)}</div>
-            </div>
-            ` : ''}
-        `;
-        
-        document.getElementById('detailModal').classList.add('show');
-    }
-    
-    function closeModal() {
-        document.getElementById('detailModal').classList.remove('show');
-    }
-    
-    async function fetchNumberData(cleanedNumber) {
-        const finalNumber = encodeURIComponent(cleanedNumber);
-        const apiUrl = `${API_BASE}?number=${finalNumber}&apikey=${API_KEY}`;
-        
-        console.log("Fetching:", apiUrl);
-        
-        try {
-            // Using fetch with no-cors mode for Vercel compatibility
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000);
-            
-            const response = await fetch(apiUrl, {
-                method: 'GET',
-                headers: { 
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                signal: controller.signal
-            });
-            clearTimeout(timeoutId);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            if (!number) {
+                document.getElementById('content').innerHTML = `
+                    <h2>NumberInfo API</h2>
+                    <p>Usage: ?number=9439123621</p>
+                    <p>Example: <a href="?number=9439123621">?number=9439123621</a></p>
+                `;
+                return;
             }
             
-            const resultData = await response.json();
-            console.log("API Response:", resultData);
+            const apiUrl = `${API_BASE}?number=${encodeURIComponent(number)}&apikey=${API_KEY}`;
             
-            // Extract results array
-            let resultsArray = [];
-            if (resultData.result && resultData.result.results && Array.isArray(resultData.result.results)) {
-                resultsArray = resultData.result.results;
-            } else if (Array.isArray(resultData.result)) {
-                resultsArray = resultData.result;
-            } else if (resultData.results && Array.isArray(resultData.results)) {
-                resultsArray = resultData.results;
-            } else if (resultData.name) {
-                resultsArray = [resultData];
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                document.getElementById('content').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (err) {
+                document.getElementById('content').innerHTML = `<pre class="error">Error: ${err.message}</pre>`;
             }
-            
-            currentResults = resultsArray;
-            currentRawData = resultData;
-            
-            // Update result count in data
-            if (resultData.result) {
-                resultData.result.count = resultsArray.length;
-            } else {
-                resultData.result = {
-                    status: "success",
-                    count: resultsArray.length,
-                    results: resultsArray,
-                    search_time: "0ms"
-                };
-            }
-            
-            return { success: true, data: resultData, results: resultsArray };
-            
-        } catch (err) {
-            console.error("Lookup error:", err);
-            return { success: false, error: err.message };
-        }
-    }
-    
-    async function searchNumber() {
-        const inputElem = document.getElementById('phoneNumber');
-        let rawNumber = inputElem.value.trim();
-        
-        if (!rawNumber) {
-            showError("Please enter a mobile number");
-            return;
         }
         
-        const cleanedNumber = rawNumber.replace(/[^0-9+]/g, '');
-        if (cleanedNumber.length < 6) {
-            showError("Invalid number format (minimum 6 digits)");
-            return;
-        }
-        
-        showLoading();
-        
-        const result = await fetchNumberData(cleanedNumber);
-        
-        if (!result.success) {
-            showError(result.error || "API request failed");
-            return;
-        }
-        
-        const container = document.getElementById('resultBody');
-        
-        if (result.results.length > 0) {
-            container.innerHTML = renderResultsList(result.data, cleanedNumber);
-            document.getElementById('statusBadge').innerHTML = `✅ ${result.results.length} records`;
-        } else {
-            container.innerHTML = `
-                <div style="text-align: center; padding: 2rem;">
-                    <i class="fas fa-search"></i> No records found for ${escapeHtml(cleanedNumber)}
-                </div>
-            `;
-            document.getElementById('statusBadge').innerHTML = `❌ No results`;
-        }
-    }
-    
-    async function getJSON() {
-        const inputElem = document.getElementById('phoneNumber');
-        let rawNumber = inputElem.value.trim();
-        
-        if (!rawNumber) {
-            showError("Please enter a mobile number");
-            return;
-        }
-        
-        const cleanedNumber = rawNumber.replace(/[^0-9+]/g, '');
-        if (cleanedNumber.length < 6) {
-            showError("Invalid number format (minimum 6 digits)");
-            return;
-        }
-        
-        showLoading();
-        
-        const result = await fetchNumberData(cleanedNumber);
-        
-        if (!result.success) {
-            showError(result.error || "API request failed");
-   
+        fetchData();
+    </script>
+</body>
+</html>
