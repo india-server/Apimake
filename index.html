@@ -1,117 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NumberInfo API</title>
-    <style>
-        body {
-            background: #0a0f1a;
-            font-family: monospace;
-            padding: 2rem;
-            color: #86efac;
-            margin: 0;
-            min-height: 100vh;
-        }
-        pre {
-            background: #0f172a;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            overflow-x: auto;
-            white-space: pre-wrap;
-            word-break: break-all;
-            margin: 0;
-        }
-        .error { color: #ef4444; }
-        .container { max-width: 900px; margin: 0 auto; }
-        h1 { color: #22c55e; margin-bottom: 1rem; }
-        .route-info { 
-            background: #0f172a; 
-            padding: 0.5rem 1rem; 
-            border-radius: 0.5rem; 
-            margin-bottom: 1rem;
-            font-size: 0.8rem;
-            color: #94a3b8;
-        }
-        a { color: #22c55e; }
-    </style>
 </head>
 <body>
-<div class="container">
-    <div id="content">Loading...</div>
-</div>
+    <pre id="result" style="background:#0a0f1a; color:#86efac; padding:1rem; margin:0; min-height:100vh; font-family:monospace;"></pre>
 
-<script>
-    const API_BASE = "https://numberinfoapi.onrender.com/lookup";
-    const API_KEY = "ak_kFQlFtduAvaDIPteuDYYJnYxamd5Tw8m";
+    <script>
+        const API_BASE = "https://numberinfoapi.onrender.com/lookup";
+        const API_KEY = "ak_kFQlFtduAvaDIPteuDYYJnYxamd5Tw8m";
 
-    async function fetchData() {
         const urlParams = new URLSearchParams(window.location.search);
-        let number = urlParams.get('number');
-        
-        // Check if it's API route
-        const pathname = window.location.pathname;
-        const isApiRoute = pathname === '/api' || pathname === '/api/';
-        
-        // If it's /api?number=xxx
-        if (isApiRoute && number) {
-            // Return pure JSON (no HTML wrapper)
-            const apiUrl = `${API_BASE}?number=${encodeURIComponent(number)}&apikey=${API_KEY}`;
-            
-            try {
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-                // Pure JSON output
-                document.body.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-                document.body.style.padding = '2rem';
-                document.body.style.margin = '0';
-                return;
-            } catch (err) {
-                document.body.innerHTML = `<pre class="error">{"error": "${err.message}"}</pre>`;
-                return;
-            }
+        const number = urlParams.get('number');
+
+        if (!number) {
+            document.getElementById('result').innerHTML = JSON.stringify({ error: "Number required", usage: "?number=9439123621" }, null, 2);
+        } else {
+            fetch(`${API_BASE}?number=${encodeURIComponent(number)}&apikey=${API_KEY}`)
+                .then(res => res.json())
+                .then(data => document.getElementById('result').innerHTML = JSON.stringify(data, null, 2))
+                .catch(err => document.getElementById('result').innerHTML = JSON.stringify({ error: err.message }, null, 2));
         }
-        
-        // If it's just /api (no number)
-        if (isApiRoute && !number) {
-            document.getElementById('content').innerHTML = `
-                <div class="route-info">
-                    📡 <strong>API Route</strong> — Usage: <code>/api?number=9439123621</code>
-                </div>
-                <pre>{
-  "error": "Number parameter required",
-  "usage": "/api?number=9439123621"
-}</pre>
-            `;
-            return;
-        }
-        
-        // Normal HTML page (UI)
-        document.getElementById('content').innerHTML = `
-            <h1>🔍 NumberInfo API</h1>
-            <div class="route-info">
-                📡 <strong>API Endpoint:</strong> <code>/api?number=9439123621</code><br>
-                🌐 <strong>Example:</strong> <a href="/api?number=9439123621">/api?number=9439123621</a>
-            </div>
-            <div class="input-group" style="margin: 1rem 0;">
-                <input type="tel" id="phoneInput" placeholder="Enter mobile number" style="padding: 0.75rem; background: #0f172a; border: 1px solid #334155; border-radius: 0.5rem; color: white; width: 70%;">
-                <button onclick="goToAPI()" style="padding: 0.75rem 1.5rem; background: #22c55e; border: none; border-radius: 0.5rem; color: #0a0f1a; font-weight: bold; cursor: pointer;">Get JSON</button>
-            </div>
-            <pre>{
-  "info": "Enter a number and click 'Get JSON' to see API response",
-  "example": "/api?number=9439123621"
-}</pre>
-        `;
-    }
-    
-    function goToAPI() {
-        const number = document.getElementById('phoneInput').value.trim();
-        if (number) {
-            window.location.href = `/api?number=${encodeURIComponent(number)}`;
-        }
-    }
-    
-    fetchData();
-</script>
+    </script>
 </body>
 </html>
