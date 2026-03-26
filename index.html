@@ -262,7 +262,7 @@
         </div>
         
         <div class="input-group">
-            <input type="tel" id="phoneNumber" placeholder="Enter mobile number (e.g., 9439123621)" value="9439123621">
+            <input type="tel" id="phoneNumber" placeholder="Enter mobile number (e.g., 9439123621)" value="7571762689">
             <button onclick="searchNumber()"><i class="fas fa-search"></i> Lookup</button>
             <button onclick="getJSON()" style="background: #3b82f6;"><i class="fas fa-code"></i> Get JSON</button>
         </div>
@@ -282,7 +282,7 @@
     
     <div class="footer">
         <i class="fas fa-lock"></i> Real-time API | Data from numberinfoapi.onrender.com
-        <br><small>📡 API Route: <code>?number=9439123621&format=json</code></small>
+        <br><small>📡 API Route: <code>?number=7571762689&format=json</code></small>
     </div>
 </div>
 
@@ -446,17 +446,23 @@
         document.getElementById('detailModal').classList.remove('show');
     }
     
-    async function fetchNumberData(cleanedNumber, returnJSON = false) {
+    async function fetchNumberData(cleanedNumber) {
         const finalNumber = encodeURIComponent(cleanedNumber);
         const apiUrl = `${API_BASE}?number=${finalNumber}&apikey=${API_KEY}`;
         
+        console.log("Fetching:", apiUrl);
+        
         try {
+            // Using fetch with no-cors mode for Vercel compatibility
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 15000);
             
             const response = await fetch(apiUrl, {
                 method: 'GET',
-                headers: { 'Accept': 'application/json' },
+                headers: { 
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
@@ -520,7 +526,7 @@
         
         showLoading();
         
-        const result = await fetchNumberData(cleanedNumber, false);
+        const result = await fetchNumberData(cleanedNumber);
         
         if (!result.success) {
             showError(result.error || "API request failed");
@@ -559,15 +565,8 @@
         
         showLoading();
         
-        const result = await fetchNumberData(cleanedNumber, true);
+        const result = await fetchNumberData(cleanedNumber);
         
         if (!result.success) {
             showError(result.error || "API request failed");
-            return;
-        }
-        
-        showJSONResponse(result.data);
-        document.getElementById('statusBadge').innerHTML = '📄 JSON';
-    }
-    
-    // ==================
+   
