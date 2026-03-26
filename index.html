@@ -15,7 +15,6 @@
         }
         .container { max-width: 700px; margin: 0 auto; }
         
-        /* Card Style */
         .card {
             background: rgba(18, 25, 45, 0.85);
             backdrop-filter: blur(12px);
@@ -42,7 +41,6 @@
             margin-bottom: 1.5rem;
         }
         
-        /* Input Group */
         .input-group {
             display: flex;
             gap: 0.75rem;
@@ -79,7 +77,6 @@
             box-shadow: 0 4px 12px #22c55e40;
         }
         
-        /* Result Panel */
         .result-panel {
             background: rgba(2, 6, 23, 0.65);
             backdrop-filter: blur(8px);
@@ -102,7 +99,6 @@
             overflow-y: auto;
         }
         
-        /* Results List */
         .results-list {
             display: flex;
             flex-direction: column;
@@ -147,7 +143,6 @@
             color: #86efac;
         }
         
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -205,7 +200,6 @@
             color: #f1f5f9;
         }
         
-        /* Loader */
         .loader {
             display: flex;
             justify-content: center;
@@ -241,6 +235,17 @@
             color: #4b5563;
         }
         
+        .json-view {
+            background: #0a0f1a;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            font-family: monospace;
+            font-size: 0.75rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: #86efac;
+        }
+        
         @media (max-width: 640px) {
             .card { padding: 1.25rem; }
             .input-group { flex-direction: column; }
@@ -253,11 +258,13 @@
         <h1><i class="fas fa-phone-alt"></i> NumberInfo <span style="color:#22c55e;">API</span></h1>
         <div class="sub">
             <i class="fas fa-database"></i> Real API Call | Instagram Reels Data Format
+            <br><small>🔗 JSON API: <code>?number=XXXX&format=json</code></small>
         </div>
         
         <div class="input-group">
             <input type="tel" id="phoneNumber" placeholder="Enter mobile number (e.g., 9439123621)" value="9439123621">
             <button onclick="searchNumber()"><i class="fas fa-search"></i> Lookup</button>
+            <button onclick="getJSON()" style="background: #3b82f6;"><i class="fas fa-code"></i> Get JSON</button>
         </div>
     </div>
     
@@ -275,6 +282,7 @@
     
     <div class="footer">
         <i class="fas fa-lock"></i> Real-time API | Data from numberinfoapi.onrender.com
+        <br><small>📡 API Route: <code>?number=9439123621&format=json</code></small>
     </div>
 </div>
 
@@ -296,7 +304,8 @@
     const API_BASE = "https://numberinfoapi.onrender.com/lookup";
     const API_KEY = "ak_kFQlFtduAvaDIPteuDYYJnYxamd5Tw8m";
     
-    let currentResults = [];  // Store results for modal
+    let currentResults = [];
+    let currentRawData = null;
     
     function escapeHtml(str) {
         if (!str) return '';
@@ -327,6 +336,17 @@
             </div>
         `;
         document.getElementById('statusBadge').innerHTML = '❌ Error';
+    }
+    
+    function showJSONResponse(data) {
+        const container = document.getElementById('resultBody');
+        container.innerHTML = `
+            <div class="json-view">
+                <i class="fas fa-brackets-curly"></i> JSON Response<br><br>
+                <pre style="color:#86efac; font-family:monospace; font-size:0.7rem; white-space:pre-wrap; word-break:break-all;">${JSON.stringify(data, null, 2)}</pre>
+            </div>
+        `;
+        document.getElementById('statusBadge').innerHTML = '📄 JSON Mode';
     }
     
     function renderResultsList(data, searchedNumber) {
@@ -426,28 +446,9 @@
         document.getElementById('detailModal').classList.remove('show');
     }
     
-    async function searchNumber() {
-        const inputElem = document.getElementById('phoneNumber');
-        let rawNumber = inputElem.value.trim();
-        
-        if (!rawNumber) {
-            showError("Please enter a mobile number");
-            return;
-        }
-        
-        // Clean number: keep only digits and +
-        const cleanedNumber = rawNumber.replace(/[^0-9+]/g, '');
-        if (cleanedNumber.length < 6) {
-            showError("Invalid number format (minimum 6 digits)");
-            return;
-        }
-        
-        showLoading();
-        
+    async function fetchNumberData(cleanedNumber, returnJSON = false) {
         const finalNumber = encodeURIComponent(cleanedNumber);
         const apiUrl = `${API_BASE}?number=${finalNumber}&apikey=${API_KEY}`;
-        
-        console.log("API URL:", apiUrl);
         
         try {
             const controller = new AbortController();
@@ -480,6 +481,7 @@
             }
             
             currentResults = resultsArray;
+            currentRawData = resultData;
             
             // Update result count in data
             if (resultData.result) {
@@ -493,46 +495,79 @@
                 };
             }
             
-            const container = document.getElementById('resultBody');
-            
-            if (resultsArray.length > 0) {
-                container.innerHTML = renderResultsList(resultData, cleanedNumber);
-                document.getElementById('statusBadge').innerHTML = `✅ ${resultsArray.length} records`;
-            } else {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 2rem;">
-                        <i class="fas fa-search"></i> No records found for ${escapeHtml(cleanedNumber)}
-                    </div>
-                `;
-                document.getElementById('statusBadge').innerHTML = `❌ No results`;
-            }
+            return { success: true, data: resultData, results: resultsArray };
             
         } catch (err) {
             console.error("Lookup error:", err);
-            if (err.name === 'AbortError') {
-                showError("Request timeout (15s). Try again.");
-            } else if (err.message.includes('Failed to fetch')) {
-                showError("Network error: Cannot reach API server. Check your connection.");
-            } else {
-                showError(err.message || "API request failed");
-            }
+            return { success: false, error: err.message };
         }
     }
     
-    // Enter key support
-    document.getElementById('phoneNumber').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') searchNumber();
-    });
+    async function searchNumber() {
+        const inputElem = document.getElementById('phoneNumber');
+        let rawNumber = inputElem.value.trim();
+        
+        if (!rawNumber) {
+            showError("Please enter a mobile number");
+            return;
+        }
+        
+        const cleanedNumber = rawNumber.replace(/[^0-9+]/g, '');
+        if (cleanedNumber.length < 6) {
+            showError("Invalid number format (minimum 6 digits)");
+            return;
+        }
+        
+        showLoading();
+        
+        const result = await fetchNumberData(cleanedNumber, false);
+        
+        if (!result.success) {
+            showError(result.error || "API request failed");
+            return;
+        }
+        
+        const container = document.getElementById('resultBody');
+        
+        if (result.results.length > 0) {
+            container.innerHTML = renderResultsList(result.data, cleanedNumber);
+            document.getElementById('statusBadge').innerHTML = `✅ ${result.results.length} records`;
+        } else {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-search"></i> No records found for ${escapeHtml(cleanedNumber)}
+                </div>
+            `;
+            document.getElementById('statusBadge').innerHTML = `❌ No results`;
+        }
+    }
     
-    // Close modal on outside click
-    document.getElementById('detailModal').addEventListener('click', function(e) {
-        if (e.target === this) closeModal();
-    });
+    async function getJSON() {
+        const inputElem = document.getElementById('phoneNumber');
+        let rawNumber = inputElem.value.trim();
+        
+        if (!rawNumber) {
+            showError("Please enter a mobile number");
+            return;
+        }
+        
+        const cleanedNumber = rawNumber.replace(/[^0-9+]/g, '');
+        if (cleanedNumber.length < 6) {
+            showError("Invalid number format (minimum 6 digits)");
+            return;
+        }
+        
+        showLoading();
+        
+        const result = await fetchNumberData(cleanedNumber, true);
+        
+        if (!result.success) {
+            showError(result.error || "API request failed");
+            return;
+        }
+        
+        showJSONResponse(result.data);
+        document.getElementById('statusBadge').innerHTML = '📄 JSON';
+    }
     
-    // Auto-search on load with default number
-    setTimeout(() => {
-        searchNumber();
-    }, 500);
-</script>
-</body>
-</html>
+    // ==================
